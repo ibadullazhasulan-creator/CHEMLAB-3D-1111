@@ -97,11 +97,12 @@ async function askGemini(sys,hist,onText){const body={systemInstruction:{parts:[
   if(r.status===404||r.status===405||!(r.headers.get('content-type')||'').includes('json')){PROXY_OK=false;return ''}
   let j={};try{j=await r.json()}catch(e){}
   if(!r.ok)throw new Error((j.error&&j.error.message)||('HTTP '+r.status));return pick(j).trim();}
- const models=['gemini-flash-latest','gemini-3.5-flash','gemini-3.5-flash-lite','gemini-flash-lite-latest',CFG.geminiModel,'gemini-2.5-flash','gemini-2.5-flash-lite'].filter(Boolean);let last='',first='';
+ const models=['gemini-3.5-flash-lite','gemini-flash-lite-latest','gemini-2.5-flash-lite','gemini-flash-latest','gemini-3.5-flash','gemini-2.5-flash'].filter(Boolean);let last='',first='';
  for(const m of [...new Set(models)]){let useThink=true;
   for(let a=0;a<2;a++){const bd=JSON.parse(JSON.stringify(body));bd.generationConfig.maxOutputTokens=1200;
    if(useThink)bd.generationConfig.thinkingConfig=/2\.5/.test(m)?{thinkingBudget:0}:{thinkingLevel:'low'};
-   let r;try{r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':streamGenerateContent?alt=sse&key='+encodeURIComponent(gKey()),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bd)})}catch(e){last=e.message;break}
+   const ac=window.AbortController?new AbortController():null;let got=false;const tmo=setTimeout(()=>{if(!got&&ac)ac.abort()},8000);
+   let r;try{r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':streamGenerateContent?alt=sse&key='+encodeURIComponent(gKey()),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bd),signal:ac?ac.signal:undefined})}catch(e){clearTimeout(tmo);last=(e.name==='AbortError'?(LANG==='kk'?'Gemini жауап бермеді (уақыт бітті)':'Gemini не ответил (таймаут)'):e.message);break}
    if(!r.ok){let j={};try{j=await r.json()}catch(e){}const em=(j.error&&j.error.message)||('HTTP '+r.status);
     if(/API key|API_KEY|PERMISSION/i.test(em))throw new Error(em);
     if(useThink&&r.status===400&&/think/i.test(em)){useThink=false;continue}
@@ -109,8 +110,8 @@ async function askGemini(sys,hist,onText){const body={systemInstruction:{parts:[
    /* stream: show text as it arrives */
    let txt='',buf='';const rd=r.body&&r.body.getReader?r.body.getReader():null;
    if(!rd){const t=await r.text();t.split('\n').forEach(l=>{if(l.startsWith('data:')){try{txt+=pick(JSON.parse(l.slice(5)))}catch(e){}}});}
-   else{const dec=new TextDecoder();for(;;){const {done,value}=await rd.read();if(done)break;buf+=dec.decode(value,{stream:true});let k;while((k=buf.indexOf('\n'))>=0){const l=buf.slice(0,k).trim();buf=buf.slice(k+1);if(l.startsWith('data:')){try{const p=pick(JSON.parse(l.slice(5)));if(p){txt+=p;onText&&onText(txt)}}catch(e){}}}}}
-   if(txt.trim())return txt.trim();last='empty';break}}
+   else{const dec=new TextDecoder();for(;;){let rr;try{rr=await rd.read()}catch(e){break}const {done,value}=rr;if(done)break;buf+=dec.decode(value,{stream:true});let k;while((k=buf.indexOf('\n'))>=0){const l=buf.slice(0,k).trim();buf=buf.slice(k+1);if(l.startsWith('data:')){try{const p=pick(JSON.parse(l.slice(5)));if(p){got=true;clearTimeout(tmo);txt+=p;onText&&onText(txt)}}catch(e){}}}}}
+   clearTimeout(tmo);if(txt.trim())return txt.trim();if(!last||last==='empty')last=LANG==='kk'?'Gemini жауап бермеді (уақыт бітті)':'Gemini не ответил (таймаут)';break}}
  throw new Error(first||last||'Gemini');}
 const STOPW=new Set('қалай неге неше қандай қайда қашан деген дегеніміз туралы бойынша дейін үшін және немесе бұл осы ол мен сен сіз не ме ма ба бе па пе түсіндір түсіндірші айтшы айтып көмектес көмек сұрақ как почему какой какая какие что где когда сколько это для при или и в на до из по про объясни расскажи помоги вопрос the what how why'.split(' '));
 const SUBD={'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','⁺':'+','⁻':'-'};
