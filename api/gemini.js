@@ -1,45 +1,60 @@
-// CHEMLAB-3D — Gemini прокси (Vercel Serverless Function), 3-нұсқа
-// Кілт осы файлда ЖАЗЫЛМАЙДЫ: Vercel → Settings → Environment Variables → GEMINI_API_KEY
+// CHEMLAB-3D - Gemini proxy (Vercel Serverless Function), version 4
+// Key is NOT in this file: Vercel -> Settings -> Environment Variables -> GEMINI_API_KEY
 const MODELS = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.0-flash'];
 
-module.exports = async (req, res) => {
-  let key = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KE ||
-    (Object.keys(process.env).filter(k => k.startsWith('GEMINI')).map(k => process.env[k]).find(v => v && v.length > 20) || '');
-    key = String(key).replace(/["'\s]/g, '');
-  if (!key) return res.status(503).json({ error: { message: 'Vercel-де GEMINI_API_KEY орнатылмаған / GEMINI_API_KEY is not set' } });
+function send(res, code, obj) {
+  res.statusCode = code;
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.end(JSON.stringify(obj));
+}
 
-  // Тексеру: браузерде /api/gemini ашсаңыз, кілттің ұзындығы, басы мен соңы ғана көрінеді
-  if (req.method === 'GET') {
-    const names = Object.keys(process.env).filter(k => k.startsWith('GEMINI'));
-    return res.status(200).json({ ok: true, version: 3, vars: names, length: key.length, start: key.slice(0, 6), end: key.slice(-4) });
-  }
-  if (req.method !== 'POST') return res.status(405).json({ error: { message: 'POST only' } });
+function readBody(req) {
+  return new Promise(function (resolve) {
+    if (req.body !== undefined && req.body !== null) {
+      if (typeof req.body === 'string') { try { return resolve(JSON.parse(req.body)); } catch (e) { return resolve({}); } }
+      if (Buffer.isBuffer(req.body)) { try { return resolve(JSON.parse(req.body.toString('utf8'))); } catch (e) { return resolve({}); } }
+      return resolve(req.body);
+    }
+    let d = '';
+    req.on('data', function (c) { d += c; });
+    req.on('end', function () { try { resolve(JSON.parse(d || '{}')); } catch (e) { resolve({}); } });
+    req.on('error', function () { resolve({}); });
+  });
+}
 
-  // Тек өз сайтымыздан келген сұрауларды қабылдаймыз
-  const host = req.headers.host || '';
-  const from = req.headers.origin || req.headers.referer || '';
-  if (from && !from.includes(host)) return res.status(403).json({ error: { message: 'Forbidden' } });
+module.exports = async function (req, res) {
+  try {
+    const env = process.env || {};
+    const names = Object.keys(env).filter(function (k) { return k.indexOf('GEMINI') === 0; });
+    let key = env.GEMINI_API_KEY || env.GEMINI_API_KE || '';
+    if (!key) { for (const n of names) { if (env[n] && String(env[n]).length > 20) { key = env[n]; break; } } }
+    key = String(key || '').replace(/["'\s]/g, '');
 
-  let b = req.body;
-  if (typeof b === 'string') { try { b = JSON.parse(b); } catch (e) { b = {}; } }
-  b = b || {};
-  const contents = Array.isArray(b.contents) ? b.contents.slice(-12) : [];
-  if (!contents.length) return res.status(400).json({ error: { message: 'Empty question' } });
-  const payload = {
-    systemInstruction: b.systemInstruction,
-    contents,
-    generationConfig: { temperature: 0.4, maxOutputTokens: 2048 }
-  };
-  if (JSON.stringify(payload).length > 60000) return res.status(413).json({ error: { message: 'Too long' } });
+    if (req.method === 'GET') {
+      return send(res, 200, { ok: true, version: 4, vars: names, length: key.length, start: key.slice(0, 6), end: key.slice(-4) });
+    }
+    if (req.method !== 'POST') return send(res, 405, { error: { message: 'POST only' } });
+    if (!key) return send(res, 503, { error: { message: 'GEMINI_API_KEY is not set in Vercel' } });
 
-  for (const m of MODELS) {
-    try {
-      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + m + ':generateContent?key=' + encodeURIComponent(key), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+    const b = (await readBody(req)) || {};
+    const contents = Array.isArray(b.contents) ? b.contents.slice(-12) : [];
+    if (!contents.length) return send(res, 400, { error: { message: 'Empty question' } });
+    const payload = {
+      systemInstruction: b.systemInstruction,
+      contents: contents,
+      generationConfig: { temperature: 0.4, maxOutputTokens: 2048 }
+    };
+
+    for (const m of MODELS) {
+      const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + m + ':generateContent?key=' + encodeURIComponent(key);
+      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (r.status === 404) continue;
-      const j = await r.json().catch(() => ({}));
-      return res.status(r.status).json(j);
-    } catch
+      let j = {};
+      try { j = await r.json(); } catch (e) { j = { error: { message: 'Bad response from Gemini (' + r.status + ')' } }; }
+      return send(res, r.status, j);
+    }
+    return send(res, 502, { error: { message: 'Gemini model not found' } });
+  } catch (e) {
+    return send(res, 500, { error: { message: 'Server: ' + (e && e.message ? e.message : String(e)) } });
+  }
+};
