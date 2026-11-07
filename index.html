@@ -312,6 +312,44 @@ body[data-mode=home] #aiBtn{top:66px;bottom:auto;width:48px;height:48px;font-siz
 #gameP .rbtns{position:relative;max-width:360px;margin:16px auto 0}
 @media (max-width:520px){#gameP .gstats{width:100%}#gameP .gstats>div{flex:1;min-width:0}#gameP .qbox h3{font-size:18px}#gameP .mgrid{gap:8px}#gameP .mi{font-size:13px;padding:10px 8px}}
 @media (prefers-reduced-motion:reduce){#gameP *{animation:none!important;transition:none!important}}
+
+/* ===== PRACTICE POSTER ===== */
+.pp{position:relative;background:#fff;border-radius:22px;overflow:hidden;margin-bottom:18px;box-shadow:0 10px 30px rgba(20,30,60,.10);border:1px solid #e7eaf2}
+.pphead{display:flex;align-items:center;gap:14px;padding:18px;color:#fff;background:linear-gradient(135deg,var(--tc,#3b6fe0),color-mix(in srgb,var(--tc,#3b6fe0) 55%,#111a3a));position:relative;overflow:hidden}
+.pphead::after{content:"";position:absolute;right:-40px;top:-60px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.12)}
+.ppsym{flex:none;min-width:64px;height:64px;padding:0 10px;border-radius:18px;display:grid;place-items:center;font:900 18px/1.1 'JetBrains Mono',monospace;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.4);text-align:center}
+.ppt{flex:1;min-width:0;position:relative;z-index:1}.ppt small{font-size:11px;font-weight:900;letter-spacing:1.6px;opacity:.85}.ppt h3{font-size:19px;font-weight:900;line-height:1.25;margin-top:2px}
+.ppprint{position:relative;z-index:1;flex:none;border:0;border-radius:12px;padding:9px 12px;font:800 13px inherit;color:#fff;background:rgba(255,255,255,.2);cursor:pointer}
+.ppprint:hover{background:rgba(255,255,255,.32)}
+.ppels{display:flex;gap:10px;padding:14px 18px 4px;overflow-x:auto}
+.ppel{flex:none;width:86px;border-radius:14px;padding:8px 8px 9px;color:#fff;background:linear-gradient(160deg,var(--ec),color-mix(in srgb,var(--ec) 60%,#000));box-shadow:0 6px 14px color-mix(in srgb,var(--ec) 30%,transparent)}
+.ppel small{display:block;font-size:10px;font-weight:800;opacity:.85}.ppel b{display:block;font-size:22px;font-weight:900;line-height:1.15;margin:2px 0}.ppel span{display:block;font-size:11px;font-weight:800;opacity:.95;line-height:1.2}
+.ppgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px 18px 0}
+.pps{border-radius:18px;padding:14px 14px 12px}
+.pps h4{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:900;margin-bottom:10px;text-transform:uppercase;letter-spacing:.4px}
+.pps h4 i{font-style:normal;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:17px;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.08)}
+.pps.phys{background:linear-gradient(160deg,#e9f3ff,#f5f9ff);border:1px solid #d3e4fb}.pps.phys h4{color:#1f5fbf}
+.pps.phys ul{list-style:none;padding:0;margin:0}.pps.phys li{position:relative;padding:0 0 9px 22px;font-size:14px;line-height:1.5;color:#22314d}
+.pps.phys li::before{content:"";position:absolute;left:4px;top:7px;width:9px;height:9px;border-radius:50%;background:#3b82f6;box-shadow:0 0 0 3px #d7e7ff}
+.pps.chem{background:linear-gradient(160deg,#f3edff,#faf7ff);border:1px solid #e1d6fb}.pps.chem h4{color:#6a3fd6}
+.ppc{margin-bottom:10px}.ppc p{font-size:13.5px;font-weight:700;color:#3a2d5c;line-height:1.4;margin:0 0 4px}
+.ppeq{font:700 13.5px/1.45 'JetBrains Mono',monospace;color:#1d1440;background:#fff;border:1px solid #e3d9fa;border-left:4px solid #8b5cf6;border-radius:10px;padding:6px 10px;overflow-x:auto;white-space:nowrap}
+.pps.use{margin:14px 18px 0;background:linear-gradient(160deg,#fff4e3,#fffaf2);border:1px solid #fbe2bc}.pps.use h4{color:#b4630a}
+.ppu{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ppui{background:#fff;border-radius:14px;padding:12px;border:1px solid #f6e3c4;box-shadow:0 4px 12px rgba(180,99,10,.06);transition:transform .2s}
+.ppui:hover{transform:translateY(-3px)}
+.ppic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:linear-gradient(135deg,#ffd27a,#ffab4a);margin-bottom:8px}
+.ppui b{display:block;font-size:14px;font-weight:900;color:#3d2a10;margin-bottom:3px}.ppui span{display:block;font-size:12.5px;line-height:1.4;color:#6a5638;font-weight:600}
+.ppfoot{padding:12px 18px 14px;font-size:11px;font-weight:900;letter-spacing:1px;color:#9aa3b5;text-align:right;text-transform:uppercase}
+.mhd{font-size:17px;font-weight:900;margin:6px 2px 12px}
+@media (max-width:700px){.ppgrid{grid-template-columns:1fr}.ppu{grid-template-columns:1fr 1fr}.pphead h3{font-size:16px}.ppprint span{display:none}}
+#printBox{display:none}
+@media print{body>*:not(#printBox){display:none!important}#printBox{display:block!important}#printBox .pp{box-shadow:none;border:0}#printBox .ppprint{display:none}#printBox *{-webkit-print-color-adjust:exact;print-color-adjust:exact}#printBox .ppgrid{grid-template-columns:1fr 1fr}#printBox .ppu{grid-template-columns:repeat(3,1fr)}@page{size:A4;margin:10mm}}
+
+#hint360{position:fixed;left:50%;top:84px;white-space:nowrap;transform:translate(-50%,-10px);z-index:30;display:flex;align-items:center;gap:10px;padding:8px 16px 8px 8px;border-radius:999px;background:rgba(15,22,40,.78);color:#fff;font-weight:800;font-size:14px;backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .4s,transform .4s}
+#hint360.on{opacity:1;transform:translate(-50%,0)}
+#hint360 .h3d{padding:5px 10px;border-radius:999px;background:linear-gradient(135deg,#7c5cff,#38bdf8);font-weight:900;font-size:13px}
+body:not([data-mode=home]) #hint360{display:none}
 </style>
 </head>
 <body>
@@ -331,7 +369,7 @@ body[data-mode=home] #aiBtn{top:66px;bottom:auto;width:48px;height:48px;font-siz
   <button class="ib" id="bOut" title="exit">⏻</button>
 </div>
 
-<div id="homeUI" class="hidden">
+<div id="hint360"><span class="h3d">360°</span><span id="hint360t"></span></div><div id="homeUI" class="hidden">
   <div id="tabs"></div>
   <div id="card">
     <div id="cKick"></div><div id="cTitle"></div>
@@ -375,7 +413,7 @@ body[data-mode=home] #aiBtn{top:66px;bottom:auto;width:48px;height:48px;font-siz
 <script>window.TOPICS=[];</script>
 <script src="data/t01.js"></script><script src="data/t02.js"></script><script src="data/t03.js"></script><script src="data/t04.js"></script><script src="data/t05.js"></script>
 <script src="data/t06.js"></script><script src="data/t07.js"></script><script src="data/t08.js"></script><script src="data/t09.js"></script><script src="data/t10.js"></script>
-<script src="data/t11.js"></script><script src="data/t12.js"></script><script src="data/t13.js"></script><script src="data/t14.js"></script><script src="data/t15.js"></script>
+<script src="data/t11.js"></script><script src="data/t12.js"></script><script src="data/t13.js"></script><script src="data/t14.js"></script><script src="data/t15.js"></script><script src="data/props.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="config.js"></script>
 <script src="app.js"></script>
