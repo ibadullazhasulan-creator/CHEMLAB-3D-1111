@@ -688,9 +688,9 @@ $('aiF').onsubmit=async e=>{e.preventDefault();const q=$('aiIn').value.trim();if
  if(S){const msgs=[{role:'user',content:sys+'\n\n---\nStudent question: '+aiHist[0].content}];for(let k=1;k<aiHist.length;k++)msgs.push(aiHist[k]);
   try{const r=await S(msgs,{cache:false,onText:({text})=>{box.textContent=text;$('aiMsgs').scrollTop=1e6},tools:[{name:'search_content',description:'Search all CHEMLAB-3D topics (lectures, practice, labs, problems) for keywords; returns matching passages.',inputSchema:{type:'object',properties:{query:{type:'string'}},required:['query']},execute:({query})=>searchContent(query)}]});return done(r.text);}
   catch(err){return done(offlineAnswer(q));}}
- if(gKey()||(PROXY_OK&&location.protocol.startsWith('http'))){try{const txt=await askGemini(sys+'\n\nRelated passages from other topics:\n'+searchContent(q).slice(0,4000),aiHist);if(txt)return done(txt);}
-  catch(err){box.textContent=(LANG==='kk'?'⚠ Gemini қатесі: ':'⚠ Ошибка Gemini: ')+err.message;await wait(1500);}}
- done(offlineAnswer(q));};
+ let gErr=''; if(gKey()||(PROXY_OK&&location.protocol.startsWith('http'))){try{const txt=await askGemini(sys+'\n\nRelated passages from other topics:\n'+searchContent(q).slice(0,4000),aiHist);if(txt)return done(txt);}
+  catch(err){gErr=(LANG==='kk'?'⚠ Gemini қатесі: ':'⚠ Ошибка Gemini: ')+err.message;}}
+ done((gErr?gErr+'\n\n':'')+offlineAnswer(q));};
 
 /* =====================================================================
    КІРУ (пароль)
