@@ -90,18 +90,27 @@ function stopSpeak(){try{window.speechSynthesis&&speechSynthesis.cancel()}catch(
 const CFG=window.CHEMLAB_CONFIG||{};
 function gKey(){let k=CFG.geminiKey||'';try{k=k||localStorage.getItem('cl3d_gkey')||''}catch(e){}return k.trim();}
 let PROXY_OK=true;
-async function askGemini(sys,hist){const body={systemInstruction:{parts:[{text:sys}]},contents:hist.map(h=>({role:h.role==='assistant'?'model':'user',parts:[{text:h.content}]})),generationConfig:{temperature:.4,maxOutputTokens:2048}};
- const pick=j=>{const c=((j.candidates||[])[0]||{}).content;return c&&c.parts?c.parts.map(p=>p.text||'').join('').trim():''};
+async function askGemini(sys,hist,onText){const body={systemInstruction:{parts:[{text:sys}]},contents:hist.map(h=>({role:h.role==='assistant'?'model':'user',parts:[{text:h.content}]})),generationConfig:{temperature:.4,maxOutputTokens:2048}};
+ const pick=j=>{const c=((j.candidates||[])[0]||{}).content;return c&&c.parts?c.parts.filter(p=>!p.thought).map(p=>p.text||'').join(''):''};
  if(!gKey()){/* Vercel: key is kept secret on the server (api/gemini.js) */
   let r;try{r=await fetch('api/gemini',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})}catch(e){PROXY_OK=false;return ''}
   if(r.status===404||r.status===405||!(r.headers.get('content-type')||'').includes('json')){PROXY_OK=false;return ''}
   let j={};try{j=await r.json()}catch(e){}
-  if(!r.ok)throw new Error((j.error&&j.error.message)||('HTTP '+r.status));return pick(j);}
+  if(!r.ok)throw new Error((j.error&&j.error.message)||('HTTP '+r.status));return pick(j).trim();}
  const models=['gemini-flash-latest','gemini-3.5-flash','gemini-3.5-flash-lite','gemini-flash-lite-latest',CFG.geminiModel,'gemini-2.5-flash','gemini-2.5-flash-lite'].filter(Boolean);let last='',first='';
- for(const m of [...new Set(models)]){const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent?key='+encodeURIComponent(gKey()),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  let j={};try{j=await r.json()}catch(e){}
-  if(!r.ok){const em=(j.error&&j.error.message)||('HTTP '+r.status);if(/API key|API_KEY|PERMISSION/i.test(em))throw new Error(em);if(!first&&!/no longer available|not found/i.test(em))first=em;last=em;continue}
-  const out=pick(j);if(out)return out;last='empty';}
+ for(const m of [...new Set(models)]){let useThink=true;
+  for(let a=0;a<2;a++){const bd=JSON.parse(JSON.stringify(body));bd.generationConfig.maxOutputTokens=1200;
+   if(useThink)bd.generationConfig.thinkingConfig=/2\.5/.test(m)?{thinkingBudget:0}:{thinkingLevel:'low'};
+   let r;try{r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':streamGenerateContent?alt=sse&key='+encodeURIComponent(gKey()),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(bd)})}catch(e){last=e.message;break}
+   if(!r.ok){let j={};try{j=await r.json()}catch(e){}const em=(j.error&&j.error.message)||('HTTP '+r.status);
+    if(/API key|API_KEY|PERMISSION/i.test(em))throw new Error(em);
+    if(useThink&&r.status===400&&/think/i.test(em)){useThink=false;continue}
+    if(!first&&!/no longer available|not found/i.test(em))first=em;last=em;break}
+   /* stream: show text as it arrives */
+   let txt='',buf='';const rd=r.body&&r.body.getReader?r.body.getReader():null;
+   if(!rd){const t=await r.text();t.split('\n').forEach(l=>{if(l.startsWith('data:')){try{txt+=pick(JSON.parse(l.slice(5)))}catch(e){}}});}
+   else{const dec=new TextDecoder();for(;;){const {done,value}=await rd.read();if(done)break;buf+=dec.decode(value,{stream:true});let k;while((k=buf.indexOf('\n'))>=0){const l=buf.slice(0,k).trim();buf=buf.slice(k+1);if(l.startsWith('data:')){try{const p=pick(JSON.parse(l.slice(5)));if(p){txt+=p;onText&&onText(txt)}}catch(e){}}}}}
+   if(txt.trim())return txt.trim();last='empty';break}}
  throw new Error(first||last||'Gemini');}
 const STOPW=new Set('қалай неге неше қандай қайда қашан деген дегеніміз туралы бойынша дейін үшін және немесе бұл осы ол мен сен сіз не ме ма ба бе па пе түсіндір түсіндірші айтшы айтып көмектес көмек сұрақ как почему какой какая какие что где когда сколько это для при или и в на до из по про объясни расскажи помоги вопрос the what how why'.split(' '));
 const SUBD={'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','⁺':'+','⁻':'-'};
@@ -681,13 +690,13 @@ function renderAiSug(){$('aiSug').innerHTML=['aiS1','aiS2','aiS3'].map(k=>`<butt
 $('aiBtn').onclick=()=>{$('ai').classList.toggle('hidden');if(!$('aiMsgs').children.length)aiAdd('assistant',t('aiHi'));renderAiSug();};$('aiX').onclick=()=>$('ai').classList.add('hidden');
 let aiBusy=false;
 $('aiF').onsubmit=async e=>{e.preventDefault();const q=$('aiIn').value.trim();if(!q||aiBusy)return;$('aiIn').value='';aiAdd('user',q);const box=aiAdd('assistant',t('aiWait'));aiBusy=true;
- const T=TOP[sel];const sys=`You are the AI assistant of CHEMLAB-3D, an inorganic chemistry learning platform for college students in Kazakhstan. Answer ONLY using the platform content below. If the platform does not cover the question, say so briefly and suggest the closest topic. Explain simply, step by step, with equations. Answer in ${LANG==='kk'?'Kazakh':'Russian'}. Keep answers under 220 words. Plain text, no markdown headings.\n\nCurrent topic content:\n${topicText(T).slice(0,9000)}\n\nAll topics: ${TOP.map(x=>x.n+'. '+tr(x.title)).join('; ')}`;
+ const T=TOP[sel];const sys=`You are the AI assistant of CHEMLAB-3D, an inorganic chemistry learning platform for college students in Kazakhstan. Answer ONLY using the platform content below. If the platform does not cover the question, say so briefly and suggest the closest topic. Explain simply, step by step, with equations. Answer in ${LANG==='kk'?'Kazakh':'Russian'}. Keep answers under 220 words. Plain text, no markdown headings.\n\nCurrent topic content:\n${topicText(T).slice(0,6000)}\n\nAll topics: ${TOP.map(x=>x.n+'. '+tr(x.title)).join('; ')}`;
  aiHist.push({role:'user',content:q});const done=txt=>{box.textContent=txt;aiHist.push({role:'assistant',content:txt});if(aiHist.length>12)aiHist=aiHist.slice(-12);while(aiHist.length&&aiHist[0].role!=='user')aiHist.shift();aiBusy=false;$('aiMsgs').scrollTop=1e6};
  const S=await getSample();
  if(S){const msgs=[{role:'user',content:sys+'\n\n---\nStudent question: '+aiHist[0].content}];for(let k=1;k<aiHist.length;k++)msgs.push(aiHist[k]);
   try{const r=await S(msgs,{cache:false,onText:({text})=>{box.textContent=text;$('aiMsgs').scrollTop=1e6},tools:[{name:'search_content',description:'Search all CHEMLAB-3D topics (lectures, practice, labs, problems) for keywords; returns matching passages.',inputSchema:{type:'object',properties:{query:{type:'string'}},required:['query']},execute:({query})=>searchContent(query)}]});return done(r.text);}
   catch(err){return done(offlineAnswer(q));}}
- let gErr=''; if(gKey()||(PROXY_OK&&location.protocol.startsWith('http'))){try{const txt=await askGemini(sys+'\n\nRelated passages from other topics:\n'+searchContent(q).slice(0,4000),aiHist);if(txt)return done(txt);}
+ let gErr=''; if(gKey()||(PROXY_OK&&location.protocol.startsWith('http'))){try{const txt=await askGemini(sys+'\n\nRelated passages from other topics:\n'+searchContent(q).slice(0,2500),aiHist,t=>{box.textContent=t;$('aiMsgs').scrollTop=1e6});if(txt)return done(txt);}
   catch(err){gErr=(LANG==='kk'?'⚠ Gemini қатесі: ':'⚠ Ошибка Gemini: ')+err.message;}}
  done((gErr?gErr+'\n\n':'')+offlineAnswer(q));};
 
