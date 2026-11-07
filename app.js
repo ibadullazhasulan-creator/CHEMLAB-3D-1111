@@ -97,13 +97,12 @@ async function askGemini(sys,hist){const body={systemInstruction:{parts:[{text:s
   if(r.status===404||r.status===405||!(r.headers.get('content-type')||'').includes('json')){PROXY_OK=false;return ''}
   let j={};try{j=await r.json()}catch(e){}
   if(!r.ok)throw new Error((j.error&&j.error.message)||('HTTP '+r.status));return pick(j);}
- const models=[CFG.geminiModel,'gemini-2.5-flash','gemini-2.5-flash-lite','gemini-2.0-flash','gemini-flash-latest','gemini-2.0-flash-lite'].filter(Boolean);let last='';
+ const models=['gemini-flash-latest','gemini-3.5-flash','gemini-3.5-flash-lite','gemini-flash-lite-latest',CFG.geminiModel,'gemini-2.5-flash','gemini-2.5-flash-lite'].filter(Boolean);let last='',first='';
  for(const m of [...new Set(models)]){const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent?key='+encodeURIComponent(gKey()),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   let j={};try{j=await r.json()}catch(e){}
-  if(r.status===404||r.status===429||r.status>=500){last=(j.error&&j.error.message)||('HTTP '+r.status);continue}
-  if(!r.ok)throw new Error((j.error&&j.error.message)||('HTTP '+r.status));
+  if(!r.ok){const em=(j.error&&j.error.message)||('HTTP '+r.status);if(/API key|API_KEY|PERMISSION/i.test(em))throw new Error(em);if(!first&&!/no longer available|not found/i.test(em))first=em;last=em;continue}
   const out=pick(j);if(out)return out;last='empty';}
- throw new Error(last||'Gemini');}
+ throw new Error(first||last||'Gemini');}
 const STOPW=new Set('қалай неге неше қандай қайда қашан деген дегеніміз туралы бойынша дейін үшін және немесе бұл осы ол мен сен сіз не ме ма ба бе па пе түсіндір түсіндірші айтшы айтып көмектес көмек сұрақ как почему какой какая какие что где когда сколько это для при или и в на до из по про объясни расскажи помоги вопрос the what how why'.split(' '));
 const SUBD={'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','⁺':'+','⁻':'-'};
 function normWords(x){return String(x).toLowerCase().replace(/[₀-₉⁰-⁹⁺⁻]/g,c=>SUBD[c]).replace(/[^\p{L}\p{N}+\-]/gu,' ').split(/\s+/).filter(Boolean);}
