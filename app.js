@@ -89,13 +89,20 @@ function stopSpeak(){try{window.speechSynthesis&&speechSynthesis.cancel()}catch(
 /* ---------- AI: claude.ai (sample) → Gemini (кілт) → офлайн іздеу ---------- */
 const CFG=window.CHEMLAB_CONFIG||{};
 function gKey(){let k=CFG.geminiKey||'';try{k=k||localStorage.getItem('cl3d_gkey')||''}catch(e){}return k.trim();}
-async function askGemini(sys,hist){const models=[CFG.geminiModel,'gemini-2.5-flash','gemini-flash-latest','gemini-2.0-flash'].filter(Boolean);let last='';
- for(const m of [...new Set(models)]){const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':gKey()},
-   body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:hist.map(h=>({role:h.role==='assistant'?'model':'user',parts:[{text:h.content}]})),generationConfig:{temperature:.4,maxOutputTokens:2048}})});
+let PROXY_OK=true;
+async function askGemini(sys,hist){const body={systemInstruction:{parts:[{text:sys}]},contents:hist.map(h=>({role:h.role==='assistant'?'model':'user',parts:[{text:h.content}]})),generationConfig:{temperature:.4,maxOutputTokens:2048}};
+ const pick=j=>{const c=((j.candidates||[])[0]||{}).content;return c&&c.parts?c.parts.map(p=>p.text||'').join('').trim():''};
+ if(!gKey()){/* Vercel: key is kept secret on the server (api/gemini.js) */
+  let r;try{r=await fetch('api/gemini',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})}catch(e){PROXY_OK=false;return ''}
+  if(r.status===404||r.status===405||!(r.headers.get('content-type')||'').includes('json')){PROXY_OK=false;return ''}
+  let j={};try{j=await r.json()}catch(e){}
+  if(!r.ok)throw new Error((j.error&&j.error.message)||('HTTP '+r.status));return pick(j);}
+ const models=[CFG.geminiModel,'gemini-2.5-flash','gemini-flash-latest','gemini-2.0-flash'].filter(Boolean);let last='';
+ for(const m of [...new Set(models)]){const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+m+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':gKey()},body:JSON.stringify(body)});
   let j={};try{j=await r.json()}catch(e){}
   if(r.status===404){last='404';continue}
   if(!r.ok)throw new Error((j.error&&j.error.message)||('HTTP '+r.status));
-  const txt=((j.candidates||[])[0]||{}).content;return txt&&txt.parts?txt.parts.map(p=>p.text||'').join('').trim():'';}
+  return pick(j);}
  throw new Error('model '+last);}
 const STOPW=new Set('қалай неге неше қандай қайда қашан деген дегеніміз туралы бойынша дейін үшін және немесе бұл осы ол мен сен сіз не ме ма ба бе па пе түсіндір түсіндірші айтшы айтып көмектес көмек сұрақ как почему какой какая какие что где когда сколько это для при или и в на до из по про объясни расскажи помоги вопрос the what how why'.split(' '));
 const SUBD={'₀':'0','₁':'1','₂':'2','₃':'3','₄':'4','₅':'5','₆':'6','₇':'7','₈':'8','₉':'9','⁰':'0','¹':'1','²':'2','³':'3','⁴':'4','⁵':'5','⁶':'6','⁷':'7','⁸':'8','⁹':'9','⁺':'+','⁻':'-'};
@@ -680,8 +687,8 @@ $('aiF').onsubmit=async e=>{e.preventDefault();const q=$('aiIn').value.trim();if
  const S=await getSample();
  if(S){const msgs=[{role:'user',content:sys+'\n\n---\nStudent question: '+aiHist[0].content}];for(let k=1;k<aiHist.length;k++)msgs.push(aiHist[k]);
   try{const r=await S(msgs,{cache:false,onText:({text})=>{box.textContent=text;$('aiMsgs').scrollTop=1e6},tools:[{name:'search_content',description:'Search all CHEMLAB-3D topics (lectures, practice, labs, problems) for keywords; returns matching passages.',inputSchema:{type:'object',properties:{query:{type:'string'}},required:['query']},execute:({query})=>searchContent(query)}]});return done(r.text);}
-  catch(err){if(!gKey())return done(offlineAnswer(q));}}
- if(gKey()){try{const txt=await askGemini(sys+'\n\nRelated passages from other topics:\n'+searchContent(q).slice(0,4000),aiHist);if(txt)return done(txt);}
+  catch(err){return done(offlineAnswer(q));}}
+ if(gKey()||(PROXY_OK&&location.protocol.startsWith('http'))){try{const txt=await askGemini(sys+'\n\nRelated passages from other topics:\n'+searchContent(q).slice(0,4000),aiHist);if(txt)return done(txt);}
   catch(err){box.textContent=(LANG==='kk'?'⚠ Gemini қатесі: ':'⚠ Ошибка Gemini: ')+err.message;await wait(1500);}}
  done(offlineAnswer(q));};
 
