@@ -5,7 +5,7 @@ const MODELS = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.0-flash'];
 module.exports = async (req, res) => {
   let key = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KE ||
     (Object.keys(process.env).filter(k => k.startsWith('GEMINI')).map(k => process.env[k]).find(v => v && v.length > 20) || '');
-  key = String(key).trim().replace(/^["'`]+|["'`]+$/g, '').replace(/\s+/g, '');
+    key = String(key).replace(/["'\s]/g, '');
   if (!key) return res.status(503).json({ error: { message: 'Vercel-де GEMINI_API_KEY орнатылмаған / GEMINI_API_KEY is not set' } });
 
   // Тексеру: браузерде /api/gemini ашсаңыз, кілттің ұзындығы, басы мен соңы ғана көрінеді
