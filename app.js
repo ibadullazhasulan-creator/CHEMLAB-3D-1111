@@ -172,11 +172,50 @@ function makeEnv(){const es=new THREE.Scene();es.add(mesh(new THREE.BoxGeometry(
    БАСТЫ САХНА: СЫНЫП, ТАҚТА «БЕЙОРГАНИКАЛЫҚ ХИМИЯ», 15 КІТАП
    ===================================================================== */
 const books=[];let boardTex;
+function buildRoom360(s){/* 360° бөлме: артқы қабырға, төбе, терезелер, есік, сөрелер, парталар */
+ const fw=mesh(new THREE.PlaneGeometry(12,12.5),std(0xe6e3dc),0,5,12.5);fw.rotation.y=Math.PI;s.add(fw);
+ const ce=mesh(new THREE.PlaneGeometry(12,15.9),std(0xf6f6f3),0,5.2,4.6);ce.rotation.x=Math.PI/2;s.add(ce);
+ const lamp=new THREE.MeshBasicMaterial({color:0xfdfdf6});[[-2.5,0],[2.5,0],[-2.5,4.5],[2.5,4.5],[-2.5,9],[2.5,9]].forEach(([x,z])=>{box(s,1.8,.04,.5,lamp,x,5.17,z)});
+ /* плинтус */
+ const pl=std(0x9b8f7d);box(s,12,.12,.03,pl,0,.06,-3.28);box(s,.03,.12,15.8,pl,-5.98,.06,4.6);box(s,.03,.12,15.8,pl,5.98,.06,4.6);box(s,12,.12,.03,pl,0,.06,12.48);
+ /* терезелер (сол қабырға) */
+ const sky=canvasTex(256,320,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#6fb3ff');gr.addColorStop(.7,'#cfe8ff');gr.addColorStop(1,'#eaf4ff');g.fillStyle=gr;g.fillRect(0,0,w,h);g.fillStyle='rgba(255,255,255,.9)';[[60,80,34],[95,70,28],[180,130,30],[205,122,22]].forEach(([x,y,r])=>{g.beginPath();g.arc(x,y,r,0,7);g.fill()});g.fillStyle='#7fae6a';g.beginPath();g.moveTo(0,h);g.quadraticCurveTo(w*.5,h*.72,w,h*.86);g.lineTo(w,h);g.fill();});
+ [0.6,5.4,10.2].forEach(z=>{const fr=box(s,.1,2.5,2.0,0xffffff,-5.95,2.75,z);const gl=mesh(new THREE.PlaneGeometry(1.8,2.3),new THREE.MeshBasicMaterial({map:sky}),-5.89,2.75,z);gl.rotation.y=Math.PI/2;s.add(gl);box(s,.06,2.3,.06,0xffffff,-5.87,2.75,z);box(s,.06,.06,1.8,0xffffff,-5.87,2.75,z);box(s,.35,.06,2.2,0xf0efe9,-5.8,1.48,z);});
+ /* оң қабырға: қауіпсіздік постері + өрт сөндіргіш */
+ const safe=canvasTex(640,860,(g,w,h)=>{g.fillStyle='#fffaf0';g.fillRect(0,0,w,h);g.fillStyle='#e53935';g.fillRect(0,0,w,130);g.fillStyle='#fff';g.font='900 46px Nunito';g.textAlign='center';g.fillText(LANG==='kk'?'ҚАУІПСІЗДІК':'БЕЗОПАСНОСТЬ',w/2,62);g.font='800 34px Nunito';g.fillText(LANG==='kk'?'ЕРЕЖЕЛЕРІ':'ПРАВИЛА',w/2,108);
+  const R=LANG==='kk'?[['🥽','Көзілдірік пен қолғап киіңіз'],['🚫','Затты дәмін татып көрмеңіз'],['👃','Иісті алақанмен желпіп иіскеңіз'],['🧪','Қышқылды суға құйыңыз, керісінше емес'],['🔥','Қыздырғанда пробирканы өзіңізге бағыттамаңыз']]:[['🥽','Надевайте очки и перчатки'],['🚫','Не пробуйте вещества на вкус'],['👃','Нюхайте, направляя пары ладонью'],['🧪','Лейте кислоту в воду, а не наоборот'],['🔥','Не направляйте пробирку на себя при нагреве']];
+  g.textAlign='left';R.forEach((r,i)=>{const y=200+i*130;g.font='64px serif';g.fillText(r[0],36,y+20);g.fillStyle='#24324a';g.font='800 31px Nunito';wrapText(g,r[1],470).slice(0,2).forEach((ln,j)=>g.fillText(ln,130,y+j*38));g.fillStyle='#fff';});});
+ const sp=mesh(new THREE.PlaneGeometry(1.3,1.75),new THREE.MeshBasicMaterial({map:safe}),5.97,2.6,3.3);sp.rotation.y=-Math.PI/2;s.add(sp);
+ const ext=new THREE.Group();ext.add(mesh(new THREE.CylinderGeometry(.13,.13,.6,24),std(0xd32f2f,{roughness:.35}),0,.3,0));ext.add(mesh(new THREE.CylinderGeometry(.05,.07,.1,16),std(0x222222),0,.65,0));ext.add(mesh(new THREE.TorusGeometry(.08,.015,8,16,Math.PI),std(0x222222),.06,.7,0));ext.position.set(5.75,0,4.6);s.add(ext);
+ /* алдыңғы қабырға: есік, сағат, зертхана үстелі, реактив сөресі */
+ box(s,1.3,2.4,.08,0x7a4f2a,3.6,1.2,12.45);box(s,1.12,2.25,.04,0x8d5f36,3.6,1.18,12.4);const hd=box(s,.18,.04,.06,0xd8c48a,3.1,1.15,12.36);
+ const clk=canvasTex(256,256,(g,w,h)=>{g.fillStyle='#fff';g.beginPath();g.arc(128,128,120,0,7);g.fill();g.lineWidth=12.5;g.strokeStyle='#24324a';g.stroke();g.fillStyle='#24324a';for(let i=0;i<12;i++){const a=i*Math.PI/6;g.fillRect(128+Math.sin(a)*96-4,128-Math.cos(a)*96-4,8,8)}g.lineCap='round';g.lineWidth=9;g.beginPath();g.moveTo(128,128);g.lineTo(128+52,128-30);g.stroke();g.lineWidth=6;g.beginPath();g.moveTo(128,128);g.lineTo(128-20,128-84);g.stroke();});
+ const ck=mesh(new THREE.CircleGeometry(.36,40),new THREE.MeshBasicMaterial({map:clk}),3.6,3.15,12.45);ck.rotation.y=Math.PI;s.add(ck);
+ box(s,4.2,.08,.9,std(0x3a3f46,{roughness:.4}),-2.6,.92,11.95);box(s,4.1,.88,.85,0xf3f3f1,-2.6,.44,11.97);
+ [[-4.2,0xe0533d],[-3.5,0x3ddc97],[-2.8,0x2e7de0],[-2.1,0xf2c94c],[-1.3,0x9b59b6]].forEach(([x,c],k)=>{const f=mkFlask(c);f.scale.setScalar(1.3+(k%2)*.3);f.position.set(x,.96,11.9);s.add(f)});
+ const wood=std(0xc49a6c);[2.0,2.7,3.4].forEach(y=>box(s,3.6,.05,.32,wood,-2.6,y,12.32));
+ const bc=[0x8e5a2b,0xd8e7f2,0x2e7de0,0x6d4c41,0xc62828,0x2aa84f,0xe08a1e,0x5d4037];
+ [2.0,2.7,3.4].forEach((y,r)=>{for(let k=0;k<9;k++){const c=bc[(k+r*3)%bc.length];const hgt=.26+((k*7+r)%3)*.06;const b=mesh(new THREE.CylinderGeometry(.07,.08,hgt,16),std(c,{roughness:.25,transparent:true,opacity:.85}),-4.2+k*.4,y+.025+hgt/2,12.3);s.add(b);s.add(mesh(new THREE.CylinderGeometry(.04,.04,.06,12),std(0x222222),-4.2+k*.4,y+.025+hgt+.03,12.3));}});
+ /* pH шкаласы постері */
+ const ph=canvasTex(900,560,(g,w,h)=>{g.fillStyle='#fdfdfb';g.fillRect(0,0,w,h);g.fillStyle='#24324a';g.textAlign='center';g.font='900 54px Nunito';g.fillText(LANG==='kk'?'pH ШКАЛАСЫ':'ШКАЛА pH',w/2,72);
+  const C=['#d7191c','#e8412c','#f46d43','#f99d59','#fdc161','#fee08b','#e6f598','#abdda4','#7fcdaa','#4fb0b7','#3288bd','#4a66b0','#5e4fa2','#6a3d9a','#54278f'];
+  const bw=(w-80)/15;C.forEach((c,i)=>{g.fillStyle=c;g.fillRect(40+i*bw,120,bw-4,150);g.fillStyle=i>4&&i<12.5?'#24324a':'#fff';g.font='900 34px Nunito';g.fillText(i,40+i*bw+bw/2-2,208)});
+  g.font='800 30px Nunito';g.fillStyle='#d7191c';g.fillText(LANG==='kk'?'ҚЫШҚЫЛ':'КИСЛАЯ',170,320);g.fillStyle='#2aa84f';g.fillText(LANG==='kk'?'БЕЙТАРАП':'НЕЙТРАЛЬНАЯ',w/2,320);g.fillStyle='#5e4fa2';g.fillText(LANG==='kk'?'СІЛТІЛІ':'ЩЕЛОЧНАЯ',w-170,320);
+  const ex=LANG==='kk'?[['🍋','Лимон шырыны','2'],['🍅','Қызанақ шырыны','4'],['💧','Таза су','7'],['🧼','Сабын','12.5'],['🧪','NaOH ерітіндісі','13']]:[['🍋','Сок лимона','2'],['🍅','Томатный сок','4'],['💧','Чистая вода','7'],['🧼','Мыло','12.5'],['🧪','Раствор NaOH','13']];
+  ex.forEach((e,i)=>{const x=40+(+e[2])*bw+bw/2;const y=i%2?452:418;g.fillStyle='#24324a';g.font='40px serif';g.fillText(e[0],x,y-14);g.font='800 21px Nunito';g.fillText(e[1]+' · pH '+e[2],x,y+16)});
+  g.fillStyle='#6b7385';g.font='700 24px Nunito';g.fillText(LANG==='kk'?'Индикаторлар: лакмус · фенолфталеин · метилоранж':'Индикаторы: лакмус · фенолфталеин · метилоранж',w/2,535);});
+ box(s,2.42,1.54,.04,0x8a5a32,1.0,2.55,12.46);const php=mesh(new THREE.PlaneGeometry(2.3,1.43),new THREE.MeshBasicMaterial({map:ph}),1.0,2.55,12.43);php.rotation.y=Math.PI;s.add(php);
+ /* студент парталары */
+ [[-2.6,9.6],[2.6,9.6]].forEach(([x,z])=>{box(s,2.2,.06,.75,std(0xd9b88c),x,.78,z);[[-1,-.32],[1,-.32],[-1,.32],[1,.32]].forEach(([dx,dz])=>box(s,.05,.76,.05,0x555b66,x+dx,.38,z+dz));[-.55,.55].forEach(dx=>{box(s,.42,.05,.42,std(0x2e7de0),x+dx,.46,z+.75);box(s,.42,.45,.05,std(0x2e7de0),x+dx,.72,z+.96);box(s,.04,.45,.04,0x555b66,x+dx,.22,z+.75)});
+  const bk=box(s,.34,.04,.26,std(0xe0533d),x-.4,.83,z);bk.rotation.y=.3;const lp=box(s,.42,.02,.3,std(0x2b2f36),x+.45,.82,z);});
+ /* өсімдік */
+ const pot=new THREE.Group();pot.add(mesh(new THREE.CylinderGeometry(.22,.17,.4,20),std(0xb5651d),0,.2,0));for(let i=0;i<9;i++){const l=mesh(new THREE.SphereGeometry(.17,12,12.5),std(0x3f8f45),Math.sin(i*2.1)*.15,.55+(i%3)*.16,Math.cos(i*2.1)*.15);l.scale.set(1,1.4,.6);pot.add(l)}pot.position.set(-5.4,0,11.4);s.add(pot);
+}
 function buildHome(){const s=homeScene;s.background=new THREE.Color(0xdfe3e8);s.fog=new THREE.Fog(0xdfe3e8,14,30);s.environment=ENV;
  s.add(new THREE.HemisphereLight(0xffffff,0x9a9a9a,.5));const dl=new THREE.DirectionalLight(0xffffff,.8);dl.position.set(3,6,5);s.add(dl);
  const floor=mesh(new THREE.PlaneGeometry(30,30),std(0xb9b4aa));floor.rotation.x=-Math.PI/2;s.add(floor);
  s.add(mesh(new THREE.PlaneGeometry(30,10),std(0xeeebe4),0,5,-3.3));
- const lw=mesh(new THREE.PlaneGeometry(12,10),std(0xe6e3dc),-6,5,2.7);lw.rotation.y=Math.PI/2;s.add(lw);const rw=mesh(new THREE.PlaneGeometry(12,10),std(0xe6e3dc),6,5,2.7);rw.rotation.y=-Math.PI/2;s.add(rw);
+ const lw=mesh(new THREE.PlaneGeometry(15.9,10),std(0xe6e3dc),-6,5,4.6);lw.rotation.y=Math.PI/2;s.add(lw);const rw=mesh(new THREE.PlaneGeometry(15.9,10),std(0xe6e3dc),6,5,4.6);rw.rotation.y=-Math.PI/2;s.add(rw);buildRoom360(s);
  box(s,7.2,3.5,.1,0x8a5a32,0,3.0,-3.22);
  boardTex=canvasTex(2048,1000,(g,w,h)=>{g.fillStyle='#22443a';g.fillRect(0,0,w,h);for(let i=0;i<400;i++){g.fillStyle='rgba(255,255,255,'+(Math.random()*.03)+')';g.fillRect(Math.random()*w,Math.random()*h,60,3)}
   g.textAlign='center';g.fillStyle='#f4f1e8';let fs=170;g.font='900 '+fs+'px Nunito, sans-serif';while(g.measureText(t('board1')).width>w-120){fs-=6;g.font='900 '+fs+'px Nunito, sans-serif'}g.fillText(t('board1'),w/2,330);
@@ -416,17 +455,20 @@ function showHint(src,dst){hideHint();if(src){const bb=bbOf(src),c=bb.getCenter(
    КАМЕРА
    ===================================================================== */
 const LOOK={yaw:0,pitch:-.4};let DEF_PITCH=Math.atan2(1.0-1.5,0.9);
-const HOMECAM={pos:new V3(0,2.1,5.6),look:new V3(0,1.7,-1.6)};
+const HOMECAM={pos:new V3(0,2.1,5.6),look:new V3(0,1.7,-1.6),fov:50};const HLOOK={yaw:0,pitch:0,intro:false};
+function hlookReset(d){const y0=HLOOK.yaw,p0=HLOOK.pitch;if(Math.abs(y0)<.001&&Math.abs(p0)<.001)return;const tgt=Math.round(y0/(Math.PI*2))*Math.PI*2;HLOOK.intro=false;tween(d||550,k=>{const e=ease(k);HLOOK.yaw=y0+(tgt-y0)*e;HLOOK.pitch=p0*(1-e)},()=>{HLOOK.yaw=0;HLOOK.pitch=0});}
+function intro360(){if(window.__fast)return;HLOOK.intro=true;const t0=performance.now(),D=11000;show360Hint(true);(function st(){if(!HLOOK.intro||mode!=='home')return;const k=Math.min(1,(performance.now()-t0)/D);const e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;HLOOK.yaw=-e*Math.PI*2;if(k<1)requestAnimationFrame(st);else{HLOOK.intro=false;HLOOK.yaw=0;setTimeout(()=>show360Hint(false),2500)}})();}
+function show360Hint(on){const h=$('hint360');const tx=$('hint360t');if(tx)tx.textContent=LANG==='kk'?'Сүйреп айналдырыңыз':'Потяните для обзора';if(h)h.classList.toggle('on',!!on&&mode==='home');}
 function setCamHome(pos,look,d){const p0=HOMECAM.pos.clone(),l0=HOMECAM.look.clone();tween(d||800,k=>{const e=ease(k);HOMECAM.pos.lerpVectors(p0,pos,e);HOMECAM.look.lerpVectors(l0,look,e)});}
 let insetTop=60,insetBot=0;
 function resize(){const w=innerWidth,h=innerHeight;R.setSize(w,h,false);cam.aspect=w/h;
- if(mode==='lab'){const a=w/h;const hf=66*Math.PI/180;cam.fov=Math.min(100,2*Math.atan(Math.tan(hf/2)/a)*180/Math.PI);cam.fov=Math.max(58,cam.fov);}else cam.fov=50;
+ if(mode==='lab'){const a=w/h;const hf=66*Math.PI/180;cam.fov=Math.min(100,2*Math.atan(Math.tan(hf/2)/a)*180/Math.PI);cam.fov=Math.max(58,cam.fov);}else cam.fov=(mode==='home'&&HOMECAM.fov)||50;
  const d=insetTop-insetBot;cam.setViewOffset(w,h+Math.abs(d),0,d>0?0:-d,w,h);cam.updateProjectionMatrix();}
 function measure(){document.body.dataset.mode=mode;{const a=innerWidth/innerHeight;const k=a<1.25?Math.min(1,(1.25-a)/.8):0;const w=a>1.9||innerHeight<480?1:0;CAMPOS.set(0,CAM0.y+.24*k+.22*w,CAM0.z+.42*k+.38*w);DEF_PITCH=Math.atan2(1.0-CAMPOS.y,CAMPOS.z-.1);}if(mode==='home'){insetTop=64;insetBot=$('homeUI').offsetHeight}else if(mode==='lab'){insetTop=$('labUI').offsetHeight*.6;insetBot=0}else{insetTop=insetBot=0}resize();}
 addEventListener('resize',()=>{measure();if(mode==='home')homeCam(true)});
 function portraitK(){const a=innerWidth/innerHeight;return a<1?Math.min(2.4,1.05/a):1;}
 let sel=0,zoomed=false;
-function homeCam(instant){const k=portraitK();let pos,look;if(!zoomed){const kk=innerWidth<innerHeight?Math.min(3.2,1.35*innerHeight/innerWidth):1;pos=new V3(0,2.65+(kk-1)*.5,6.3*kk);look=new V3(0,2.4,-1.6)}else{const b=books[sel];const x=b.userData.x;pos=new V3(x*.9,1.55,-1.25+1.7*k);look=new V3(x,1.3,-1.25)}
+function homeCam(instant){const k=portraitK();let pos,look;HOMECAM.fov=50;if(!zoomed){const kk=innerWidth<innerHeight?Math.min(3.2,1.35*innerHeight/innerWidth):1;const z1=6.3*kk,z2=Math.min(z1,9.6);if(z2<z1)HOMECAM.fov=2*Math.atan(Math.tan(25*Math.PI/180)*(z1+1.6)/(z2+1.6))*180/Math.PI;pos=new V3(0,2.65+(kk-1)*.5,z2);look=new V3(0,2.4,-1.6)}else{const b=books[sel];const x=b.userData.x;pos=new V3(x*.9,1.55,-1.25+1.7*k);look=new V3(x,1.3,-1.25)}
  if(instant){HOMECAM.pos.copy(pos);HOMECAM.look.copy(look)}else setCamHome(pos,look);}
 async function recenter(){const y0=LOOK.yaw,p0=LOOK.pitch;let y1=0;if(Math.abs(y0)<.02&&Math.abs(p0-DEF_PITCH)<.02)return;const tgt=Math.round(y0/(Math.PI*2))*Math.PI*2;await tw(450,k=>{const e=ease(k);LOOK.yaw=y0+(tgt-y0)*e;LOOK.pitch=p0+(DEF_PITCH-p0)*e});LOOK.yaw=0;}
 
@@ -437,7 +479,7 @@ function renderTabs(){$('tabs').innerHTML=TOP.map((T,i)=>`<button class="tab ${i
  $('tabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>select(+b.dataset.i,true));const on=$('tabs').querySelector('.on');on&&on.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});}
 function renderCard(){const T=TOP[sel];$('cKick').textContent=(LANG==='kk'?T.n+'-апта':'Неделя '+T.n)+' · '+tr(T.group||'');$('cKick').style.color=T.color;$('card').style.borderTopColor=T.color;$('cTitle').textContent=tr(T.title);
  const p=topicPct(sel);$('prog').querySelector('i').style.width=p+'%';$('pct').textContent=p+'%';$('aLabS').textContent=(T.labs||[]).length+' '+t('exps');measure();}
-function select(i,zoom){sel=i;zoomed=!!zoom;renderTabs();renderCard();books.forEach((b,j)=>{const up=zoomed&&j===i;const y0=b.position.y,y1=b.userData.baseY+(up?.1:0);tween(450,k=>{b.position.y=y0+(y1-y0)*k})});
+function select(i,zoom){sel=i;zoomed=!!zoom;if(zoom)hlookReset();renderTabs();renderCard();books.forEach((b,j)=>{const up=zoomed&&j===i;const y0=b.position.y,y1=b.userData.baseY+(up?.1:0);tween(450,k=>{b.position.y=y0+(y1-y0)*k})});
  const ring=homeScene.userData.ring;ring.visible=zoomed;ring.position.x=books[i].userData.x;homeCam();}
 function relang(l){LANG=l;try{localStorage.setItem('cl3d_lang',l)}catch(e){}applyStatic();
  if(boardTex){redraw(boardTex);books.forEach(b=>redraw(b.userData.tex));}if(mode!=='login'){renderTabs();renderCard();}
@@ -455,6 +497,16 @@ function closeModal(){$('ov').classList.add('hidden');}
    ОҚУ (лекция, инфографика, 3D, практика)
    ===================================================================== */
 let curRTab='lec';
+function propsPoster(T){const P=(window.PROPS||{})[T.n];if(!P)return '';const kk=LANG==='kk';
+ const cards=(T.cards||[]).map(c=>`<div class="ppel" style="--ec:${c.bg||T.color}"><small>${esc(String(c.z))}</small><b>${esc(c.el)}</b><span>${esc(tr(c.name))}</span></div>`).join('');
+ return `<div class="pp" id="ppPoster" style="--tc:${T.color}"><div class="pphead"><div class="ppsym">${esc(T.sym)}</div><div class="ppt"><small>${kk?'ПОСТЕР · '+T.n+'-АПТА':'ПОСТЕР · НЕДЕЛЯ '+T.n}</small><h3>${esc(tr(T.title))}</h3></div><button class="ppprint" title="print">🖨 ${kk?'Басып шығару':'Печать'}</button></div>
+ ${cards?`<div class="ppels">${cards}</div>`:''}
+ <div class="ppgrid"><section class="pps phys"><h4><i>🧊</i>${kk?'Физикалық қасиеттері':'Физические свойства'}</h4><ul>${(P.phys||[]).map(x=>`<li>${esc(tr(x))}</li>`).join('')}</ul></section>
+ <section class="pps chem"><h4><i>⚗️</i>${kk?'Химиялық қасиеттері':'Химические свойства'}</h4>${(P.chem||[]).map(x=>`<div class="ppc"><p>${esc(tr(x.t))}</p>${x.eq?`<div class="ppeq">${esc(x.eq)}</div>`:''}</div>`).join('')}</section></div>
+ <section class="pps use"><h4><i>🏭</i>${kk?'Қолданылу салалары':'Области применения'}</h4><div class="ppu">${(P.use||[]).map(x=>`<div class="ppui"><div class="ppic">${x.i}</div><b>${esc(tr(x.h))}</b><span>${esc(tr(x.t))}</span></div>`).join('')}</div></section>
+ <div class="ppfoot">CHEMLAB-3D · ${kk?'Бейорганикалық химия':'Неорганическая химия'}</div></div>`;}
+function printPoster(){const p=$('ppPoster');if(!p)return;let box=$('printBox');if(box)box.remove();box=document.createElement('div');box.id='printBox';box.appendChild(p.cloneNode(true));document.body.appendChild(box);
+ const done=()=>{box.remove();removeEventListener('afterprint',done)};addEventListener('afterprint',done);setTimeout(()=>{try{print()}catch(e){done()}},50);}
 function openRead(i,tab){sel=i;curRTab=tab||'lec';const T=TOP[i];$('readP').classList.remove('hidden');$('readP').style.setProperty('--tc',T.color);
  $('rTitle').innerHTML=`<small>${LANG==='kk'?T.n+'-апта':'Неделя '+T.n} · ${esc(tr(T.group||''))}</small>${esc(tr(T.title))}`;
  const tabs=[['lec','tLec'],['pos','tPos'],['m3d','t3d'],['pr','tPr']];$('rTabs').innerHTML=tabs.map(([k,l])=>`<button data-k="${k}" class="${k===curRTab?'on':''}">${t(l)}</button>`).join('');
@@ -470,7 +522,7 @@ function openRead(i,tab){sel=i;curRTab=tab||'lec';const T=TOP[i];$('readP').clas
   h+=`<div class="poster">${(T.poster||[]).map((p,k)=>`<div class="pcard" style="background:linear-gradient(135deg,${pal[k%pal.length]},${pal[(k+3)%pal.length]})"><div class="i">${p.i}</div><h4>${esc(tr(p.h))}</h4><p>${esc(tr(p.t))}</p></div>`).join('')}</div>`;B.innerHTML=h;}
  else if(curRTab==='m3d'){const ms=T.models||[];B.innerHTML=`<canvas id="mv"></canvas><div class="mlist">${ms.map((m,k)=>`<button data-k="${k}">${esc(m.f)}</button>`).join('')}</div><div class="legend" id="mleg"></div><div class="mdesc" id="mdesc"></div><p style="font-size:12px;color:#6b7385;font-weight:700;margin-top:8px">${t('drag3d')}</p>`;
   B.querySelectorAll('.mlist button').forEach(b=>b.onclick=()=>showModel(T,+b.dataset.k));if(ms.length)showModel(T,0);}
- else{let h='';(T.practice||[]).forEach(m=>{h+=`<div class="mech"><h3>⚙️ ${esc(tr(m.h))}</h3>${(m.steps||[]).map((s,k)=>`<div class="step"><b>${k+1}</b><span>${esc(tr(s))}</span></div>`).join('')}${m.eq?`<div class="eqs">${[].concat(m.eq).map(e=>`<div class="eq">${esc(e)}</div>`).join('')}</div>`:''}</div>`});B.innerHTML=h;}}
+ else{let h=propsPoster(T);if((T.practice||[]).length)h+=`<h3 class="mhd">⚙️ ${LANG==='kk'?'Реакция механизмдері':'Механизмы реакций'}</h3>`;(T.practice||[]).forEach(m=>{h+=`<div class="mech"><h3>⚙️ ${esc(tr(m.h))}</h3>${(m.steps||[]).map((s,k)=>`<div class="step"><b>${k+1}</b><span>${esc(tr(s))}</span></div>`).join('')}${m.eq?`<div class="eqs">${[].concat(m.eq).map(e=>`<div class="eq">${esc(e)}</div>`).join('')}</div>`:''}</div>`});B.innerHTML=h;const pb=B.querySelector('.ppprint');if(pb)pb.onclick=printPoster;}}
 $('rBack').onclick=()=>{$('readP').classList.add('hidden');stopMV();renderCard();};
 
 /* ---------- 3D молекула көрсеткіші ---------- */
@@ -598,7 +650,7 @@ function enterLab(ti,ei){mode='lab';sel=ti;$('top').classList.add('hidden');$('h
  $('lCenter').textContent=t('center');$('lLog').textContent=t('logB');measure();LOOK.yaw=0;LOOK.pitch=DEF_PITCH;cam.position.copy(CAMPOS);loadEx(ti,ei);
  const T=TOP[ti];modal(`<div class="kick">${LANG==='kk'?T.n+'-апта':'Неделя '+T.n} · ${esc(tr(T.group||''))}</div><h2>🧪 ${t('enterLab')}</h2><p><b style="color:#fff">${esc(tr(T.title))}</b><br>${(T.labs||[]).length} ${t('labIntro')}</p><button class="btnG" id="mE">${t('go')}</button><button class="btnD" id="mH">${t('toHome')}</button>`);
  $('mE').onclick=()=>{beep('ok');showExIntro()};$('mH').onclick=()=>{closeModal();goHome()};}
-function goHome(){stopSpeak();mode='home';EX=null;closeModal();hideHint();$('labUI').classList.add('hidden');$('labBottom').classList.add('hidden');$('log').classList.add('hidden');$('top').classList.remove('hidden');$('homeUI').classList.remove('hidden');measure();renderTabs();renderCard();select(sel,true);homeCam(true);}
+function goHome(){stopSpeak();mode='home';HLOOK.yaw=0;HLOOK.pitch=0;HLOOK.intro=false;EX=null;closeModal();hideHint();$('labUI').classList.add('hidden');$('labBottom').classList.add('hidden');$('log').classList.add('hidden');$('top').classList.remove('hidden');$('homeUI').classList.remove('hidden');measure();renderTabs();renderCard();select(sel,true);homeCam(true);}
 $('lHome').onclick=goHome;$('lSnd').onclick=()=>{soundOn=!soundOn;$('lSnd').textContent=soundOn?'🔊':'🔇';if(!soundOn)stopSpeak();};
 if($('lVoice'))$('lVoice').onclick=()=>{voiceOn=!voiceOn;try{localStorage.setItem('cl3d_voice',voiceOn?'1':'0')}catch(e){}$('lVoice').style.opacity=voiceOn?1:.45;if(!voiceOn)stopSpeak();else speak(LANG==='kk'?'Дауыс қосулы':'Озвучка включена')};
 $('aiCfg').onclick=aiKeyDialog;$('lCenter').onclick=()=>recenter();$('lLog').onclick=()=>$('log').classList.toggle('hidden');
@@ -661,15 +713,15 @@ function pickObj(x,y){ndc.set(x/innerWidth*2-1,-(y/innerHeight)*2+1);ray.setFrom
  for(const h of hits){if(h.object.isSprite)continue;const o=owner(h);if(o)return o;}
  for(const h of hits){const o=owner(h);if(o)return o;}
  let best=null,bd=Math.max(34,innerWidth*.045);Object.values(EX?EX.objs:{}).forEach(o=>{const bb=bbOf(o),c=bb.getCenter(new V3());const p=c.project(cam);if(p.z>1)return;const sx=(p.x+1)/2*innerWidth,sy=(1-p.y)/2*innerHeight;const d=Math.hypot(sx-x,sy-y);if(d<bd){bd=d;best=o}});return best;}
-canvas.addEventListener('pointerdown',e=>{if(mode==='home'){PD={x:e.clientX,y:e.clientY,m:0,home:1};return}if(mode!=='lab')return;canvas.setPointerCapture(e.pointerId);
+canvas.addEventListener('pointerdown',e=>{if(mode==='home'){PD={x:e.clientX,y:e.clientY,m:0,home:1,yaw:HLOOK.yaw,pitch:HLOOK.pitch};return}if(mode!=='lab')return;canvas.setPointerCapture(e.pointerId);
  const o=(EX&&EX.started&&!EX.busy)?pickObj(e.clientX,e.clientY):null;PD={x:e.clientX,y:e.clientY,m:0,obj:o,yaw:LOOK.yaw,pitch:LOOK.pitch};});
-canvas.addEventListener('pointermove',e=>{if(!PD)return;const dx=e.clientX-PD.x,dy=e.clientY-PD.y;PD.m=Math.max(PD.m,Math.abs(dx)+Math.abs(dy));if(PD.home)return;
+canvas.addEventListener('pointermove',e=>{if(!PD)return;const dx=e.clientX-PD.x,dy=e.clientY-PD.y;PD.m=Math.max(PD.m,Math.abs(dx)+Math.abs(dy));if(PD.home){if(PD.m>6){if(HLOOK.intro){HLOOK.intro=false;PD.yaw=HLOOK.yaw;PD.x=e.clientX;PD.y=e.clientY;return}HLOOK.yaw=PD.yaw-dx*.005;HLOOK.pitch=Math.max(-.75,Math.min(.75,PD.pitch-dy*.004));show360Hint(false);canvas.style.cursor='grabbing'}return;}
  if(PD.obj&&PD.m>10&&!HOLD&&!EX.busy){const o=PD.obj;const d=o.userData.def;if(['bottle','dropper','jar','splint','wire','tube'].includes(d.k)){EX.busy=true;hideHint();HOLD={obj:o.userData.pip||o,src:o,ready:false,tgt:null};
    (async()=>{await recenterQuick();await pickUp(HOLD.obj,true);if(HOLD){HOLD.ready=true}})();}}
  if(HOLD){ndc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(ndc,cam);const p=new V3();if(ray.ray.intersectPlane(dragPlane,p)){p.x=Math.max(-.95,Math.min(.95,p.x));p.z=Math.max(-.5,Math.min(.62,p.z));HOLD.tgt=p;const cd=dropCandidate(p,HOLD.src);if(cd){const q=wp(cd);hintRing.position.set(q.x,BENCH_Y+.003,q.z);hintRing.scale.setScalar(.8);hintRing.visible=true}else hintRing.visible=false;}return;}
  if(!PD.obj||PD.m>10&&!HOLD){if(!PD.obj){LOOK.yaw=PD.yaw-dx*.006;LOOK.pitch=Math.max(-1.25,Math.min(.9,PD.pitch-dy*.005))}}});
 canvas.addEventListener('pointerup',e=>{const P=PD;PD=null;if(!P)return;
- if(P.home){if(P.m<8){ndc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(ndc,cam);const h=ray.intersectObjects(books,false)[0];if(h)select(h.object.userData.idx,true)}return}
+ if(P.home){canvas.style.cursor='';if(P.m<8){ndc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(ndc,cam);const h=ray.intersectObjects(books,false)[0];if(h)select(h.object.userData.idx,true)}return}
  if(mode!=='lab'||!EX)return;
  if(HOLD){const H=HOLD;const fin=async()=>{while(!H.ready)await wait(40);HOLD=null;hideHint();const best=H.tgt?dropCandidate(H.tgt,H.src):null;
    await tryAction(H.src,best,H.obj);};fin();return;}
@@ -683,7 +735,7 @@ async function recenterQuick(){if(Math.abs(LOOK.yaw)>.25||Math.abs(LOOK.pitch-DE
    ===================================================================== */
 let SAMPLE=undefined,aiHist=[];
 async function getSample(){if(SAMPLE!==undefined)return SAMPLE;try{SAMPLE=window.claude&&window.claude.use?await window.claude.use('sample'):null}catch(e){SAMPLE=null}return SAMPLE;}
-function topicText(T){const L=x=>tr(x);let s=`# ${T.n}. ${L(T.title)}\n`;(T.lecture||[]).forEach(x=>{s+=`## ${L(x.h)}\n${L(x.p)}\n${(x.eq||[]).join('\n')}\n`});(T.practice||[]).forEach(m=>{s+=`## ${L(m.h)}\n${(m.steps||[]).map(L).join('\n')}\n${[].concat(m.eq||[]).join('\n')}\n`});
+function topicText(T){const L=x=>tr(x);let s=`# ${T.n}. ${L(T.title)}\n`;(T.lecture||[]).forEach(x=>{s+=`## ${L(x.h)}\n${L(x.p)}\n${(x.eq||[]).join('\n')}\n`});(T.practice||[]).forEach(m=>{s+=`## ${L(m.h)}\n${(m.steps||[]).map(L).join('\n')}\n${[].concat(m.eq||[]).join('\n')}\n`});{const P=(window.PROPS||{})[T.n];if(P){s+=`## Properties & uses\n`+(P.phys||[]).map(L).join('\n')+'\n'+(P.chem||[]).map(x=>L(x.t)+': '+(x.eq||'')).join('\n')+'\n'+(P.use||[]).map(x=>L(x.h)+' — '+L(x.t)).join('\n')+'\n'}}
  (T.labs||[]).forEach(l=>{s+=`## Lab: ${L(l.t)}\n${L(l.d)}\n${(l.steps||[]).map(x=>L(x.o)).join('\n')}\n${(l.eq||[]).join('\n')}\n`});(T.problems||[]).forEach(p=>{s+=`Problem: ${L(p.q)} Answer: ${p.a} ${L(p.u||'')}. ${L(p.s)}\n`});return s;}
 function searchContent(q){const words=String(q||'').toLowerCase().split(/\s+/).filter(w=>w.length>2);const out=[];TOP.forEach(T=>{const tx=topicText(T);const parts=tx.split('\n## ');parts.forEach(p=>{const lw=p.toLowerCase();const sc=words.reduce((a,w)=>a+(lw.includes(w)?1:0),0);if(sc)out.push({sc,t:`[${T.n}] `+p.slice(0,900)})})});return out.sort((a,b)=>b.sc-a.sc).slice(0,4).map(x=>x.t).join('\n---\n')||'nothing found';}
 function aiAdd(role,text){const d=document.createElement('div');d.className='am '+(role==='user'?'u':'a');d.textContent=text;$('aiMsgs').appendChild(d);$('aiMsgs').scrollTop=1e6;return d;}
@@ -708,7 +760,7 @@ const PW_HASH='8486caa8b27faaaaa4d5199ffa5af182e93ed0628d37a6464f25f8d5f5d08a19'
 async function sha(s){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))|0;return 'x'+h}}
 $('lf').onsubmit=async e=>{e.preventDefault();const v=$('pw').value.trim();const h=await sha(v);if(h===PW_HASH||h==='x1544378959'){try{sessionStorage.setItem('cl3d_ok','1')}catch(e){}$('perr').textContent='';startApp()}else{$('perr').textContent=t('wrong');beep('bad');$('pw').value=''}};
 $('bOut').onclick=()=>{try{sessionStorage.removeItem('cl3d_ok')}catch(e){}location.reload()};
-function startApp(){$('login').classList.add('hidden');mode='home';$('top').classList.remove('hidden');$('homeUI').classList.remove('hidden');$('aiBtn').classList.remove('hidden');renderTabs();renderCard();homeCam(true);measure();getSample();}
+function startApp(){setTimeout(intro360,900);$('login').classList.add('hidden');mode='home';$('top').classList.remove('hidden');$('homeUI').classList.remove('hidden');$('aiBtn').classList.remove('hidden');renderTabs();renderCard();homeCam(true);measure();getSample();}
 
 /* =====================================================================
    ЦИКЛ
@@ -716,7 +768,8 @@ function startApp(){$('login').classList.add('hidden');mode='home';$('top').clas
 const clock=new THREE.Clock();
 function loop(){requestAnimationFrame(loop);const dt=Math.min(.05,clock.getDelta()),T=clock.elapsedTime,now=performance.now();
  for(let i=tweens.length-1;i>=0;i--){const w=tweens[i];const k=Math.min(1,(now-w.t0)/w.dur);w.fn(k);if(k>=1){tweens.splice(i,1);w.done&&w.done()}}
- if(mode==='home'||mode==='login'){cam.position.copy(HOMECAM.pos);if(mode==='login'){cam.position.x=Math.sin(T*.15)*1.5}cam.lookAt(HOMECAM.look);books.forEach((b,j)=>{if(zoomed&&j===sel&&mode==='home')b.rotation.y=Math.sin(T*1.2)*.08;else b.rotation.y*=.9});R.render(homeScene,cam);return;}
+ if(mode==='home'||mode==='login'){cam.position.copy(HOMECAM.pos);if(mode==='login'){cam.position.x=Math.sin(T*.15)*1.5}if(mode==='home'&&Math.abs(cam.fov-HOMECAM.fov)>.01){cam.fov=HOMECAM.fov;cam.updateProjectionMatrix()}
+  if(mode==='home'&&(HLOOK.yaw||HLOOK.pitch)){const b=HOMECAM.look.clone().sub(HOMECAM.pos);const r=b.length();const y0=Math.atan2(b.x,-b.z)+HLOOK.yaw,p0=Math.max(-1.1,Math.min(1.1,Math.asin(b.y/r)+HLOOK.pitch));cam.lookAt(HOMECAM.pos.clone().add(new V3(Math.sin(y0)*Math.cos(p0),Math.sin(p0),-Math.cos(y0)*Math.cos(p0))))}else cam.lookAt(HOMECAM.look);books.forEach((b,j)=>{if(zoomed&&j===sel&&mode==='home')b.rotation.y=Math.sin(T*1.2)*.08;else b.rotation.y*=.9});R.render(homeScene,cam);return;}
  if(mode!=='lab')return;
  cam.position.copy(CAMPOS);const f=new V3(Math.sin(LOOK.yaw)*Math.cos(LOOK.pitch),Math.sin(LOOK.pitch),-Math.cos(LOOK.yaw)*Math.cos(LOOK.pitch));cam.lookAt(CAMPOS.clone().add(f));
  [HAND,HANDL].forEach(H=>{if(H.userData.idle){const p=restPos(H===HANDL);H.position.lerp(p.add(new V3(0,Math.sin(T*1.5+(H===HANDL?1:0))*.004,0)),.2);H.rotation.y=-LOOK.yaw;}});
@@ -733,5 +786,5 @@ function loop(){requestAnimationFrame(loop);const dt=Math.min(.05,clock.getDelta
 function start(){applyStatic();makeEnv();buildHome();buildLab();buildHands();homeCam(true);resize();loop();$('loading').remove();
  let ok=false;try{ok=sessionStorage.getItem('cl3d_ok')==='1'}catch(e){}if(ok)startApp();else{$('login').classList.remove('hidden');mode='login';HOMECAM.pos.set(0,2.2,6);HOMECAM.look.set(0,2.2,-2);}}
 (document.fonts&&document.fonts.load?Promise.all([document.fonts.load('900 40px Nunito'),document.fonts.load('600 20px JetBrains Mono')]).catch(()=>{}):Promise.resolve()).then(start);
-window.__dbg={pickObj,get HAND(){return HAND},get cam(){return cam},enterLab,loadEx,tryAction,get EX(){return EX},openRead,openGames,goHome,showModel,searchContent,TOP};
+window.__dbg={HLOOK,intro360,openRead,pickObj,get HAND(){return HAND},get cam(){return cam},enterLab,loadEx,tryAction,get EX(){return EX},openRead,openGames,goHome,showModel,searchContent,TOP};
 })();
